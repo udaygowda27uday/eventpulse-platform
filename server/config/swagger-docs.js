@@ -180,6 +180,12 @@
  * /api/users/register:
  *   post:
  *     summary: Register a new user
+ *     description: |
+ *       Creates a new user account. The backend enforces the following validation rules:
+ *       - **Name**: Required, cannot be empty
+ *       - **Email**: Required, must be a valid email format (must contain @)
+ *       - **Password**: Required, minimum 8 characters, must include at least one uppercase letter,
+ *         one lowercase letter, one number, and one special character (@$!%*?&#^()_+-=)
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -197,15 +203,36 @@
  *                 example: John Doe
  *               email:
  *                 type: string
+ *                 format: email
  *                 example: john@example.com
  *               password:
  *                 type: string
+ *                 format: password
+ *                 minLength: 8
  *                 example: SecurePass123!
+ *                 description: Min 8 chars, must include uppercase, lowercase, number, and special character
  *     responses:
  *       200:
  *         description: User registered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User Registered Successfully
  *       400:
- *         description: User already exists
+ *         description: |
+ *           Validation failed or user already exists. Possible messages:
+ *           - "Name, email, and password are required"
+ *           - "Invalid email format"
+ *           - "Password must be at least 8 characters and include uppercase, lowercase, number, and special character"
+ *           - "User Already Exists"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       500:
  *         description: Server error
  */
@@ -215,6 +242,9 @@
  * /api/users/login:
  *   post:
  *     summary: User login
+ *     description: |
+ *       Authenticates a user and sets an httpOnly JWT cookie named `token`.
+ *       The backend validates that email format is correct before querying the database.
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -228,19 +258,40 @@
  *             properties:
  *               email:
  *                 type: string
+ *                 format: email
  *                 example: john@example.com
  *               password:
  *                 type: string
  *                 example: SecurePass123!
  *     responses:
  *       200:
- *         description: Login successful
+ *         description: Login successful — JWT token set in httpOnly cookie
  *         headers:
  *           Set-Cookie:
  *             schema:
  *               type: string
+ *               example: token=eyJhbGciOiJIUzI1NiJ9...; HttpOnly; SameSite=Lax
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *                 message:
+ *                   type: string
+ *                   example: Login Successfull
  *       400:
- *         description: Invalid credentials
+ *         description: |
+ *           Validation failed or credentials incorrect. Possible messages:
+ *           - "Email and password are required"
+ *           - "Invalid email format"
+ *           - "User Not Found"
+ *           - "Invalid Password"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 
 /**
@@ -282,20 +333,97 @@
  * @swagger
  * /api/users/get-all-users:
  *   get:
- *     summary: Get all users (Admin)
+ *     summary: Get all users
+ *     description: Returns a list of all registered users. **Admin only** — non-admin users will receive HTTP 403.
  *     tags: [Users]
  *     security:
  *       - cookieAuth: []
  *     responses:
  *       200:
- *         description: List of all users
+ *         description: List of all users (password field excluded)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/User'
+ *                 message:
+ *                   type: string
+ *                   example: Users fetched successfully
+ *       401:
+ *         description: Unauthorized — not logged in
+ *       403:
+ *         description: Forbidden — logged in but not an admin
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               message: Access denied. Admin only.
  */
 
 /**
  * @swagger
- * /api/users/update-user/{id}:
+ * /api/users/update-profile:
  *   put:
- *     summary: Update user (Admin)
+ *     summary: Update own profile
+ *     description: |
+ *       Allows the currently authenticated user to update their **own** name and/or email.
+ *       - Users can only update themselves — they cannot pass another user's ID
+ *       - `isAdmin` status cannot be changed through this endpoint
+ *       - Email must be a valid format and not already in use by another account
+ *     tags: [Users]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: John Updated
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: john.updated@example.com
+ *           description: At least one of name or email must be provided
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
+ *                 message:
+ *                   type: string
+ *                   example: Profile updated successfully
+ *       400:
+ *         description: |
+ *           Validation error. Possible messages:
+ *           - "Provide at least one field to update (name or email)"
+ *           - "Invalid email format"
+ *           - "Email is already in use by another account"
+ *       401:
+ *         description: Unauthorized — not logged in
+ *       404:
+ *         description: User not found
+ *
+ * /api/users/update-user-role/{id}:
+ *   put:
+ *     summary: Change user admin role (Admin only)
+ *     description: |
+ *       Allows an admin to **promote or demote** another user's admin status.
+ *       - Admins **cannot** modify other users' name, email, or password
+ *       - Admins **cannot** change their own role through this endpoint
  *     tags: [Users]
  *     security:
  *       - cookieAuth: []
@@ -305,21 +433,48 @@
  *         required: true
  *         schema:
  *           type: string
+ *         description: Target user's MongoDB _id
  *     requestBody:
+ *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - isAdmin
  *             properties:
- *               name:
- *                 type: string
- *               email:
- *                 type: string
  *               isAdmin:
  *                 type: boolean
+ *                 example: true
+ *                 description: true = promote to admin, false = demote from admin
  *     responses:
  *       200:
- *         description: User updated successfully
+ *         description: Role updated — "User promoted to admin successfully" or "User demoted from admin successfully"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: |
+ *           - "isAdmin must be a boolean value (true or false)"
+ *           - "You cannot change your own admin status"
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden — not an admin
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               message: Access denied. Admin only.
+ *       404:
+ *         description: User not found
  */
 
 /**

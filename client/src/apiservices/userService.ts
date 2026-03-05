@@ -25,8 +25,15 @@ export const getAllUsers = async () => {
   return response.data;
 };
 
-export const updateUser = async (id: string, data: any) => {
-  const response = await api.put(`/users/update-user/${id}`, data);
+// Users update their OWN profile (name only — no ID in URL)
+export const updateProfile = async (data: { name?: string; email?: string }) => {
+  const response = await api.put("/users/update-profile", data);
+  return response.data;
+};
+
+// Admin only — promote or demote another user's isAdmin status
+export const updateUserRole = async (id: string, isAdmin: boolean) => {
+  const response = await api.put(`/users/update-user-role/${id}`, { isAdmin });
   return response.data;
 };
 

@@ -4,23 +4,22 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import { loginUser } from "../../../apiservices/userService";
 
+const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
 function LoginPage() {
   const [loading, setLoading] = useState(false);
-  
-  const onFinish = async (values: never) => {
+
+  const onFinish = async (values: { email: string; password: string }) => {
     try {
       setLoading(true);
       const response = await loginUser(values);
-      
-      // Don't manually set cookie - backend already set it as httpOnly cookie
-      // Just show success message and redirect
       message.success(response.message);
-      
-      // Use window.location for hard navigation
       setTimeout(() => {
         window.location.href = "/";
       }, 500);
-      
     } catch (error: any) {
       message.error(error.response?.data?.message || error.message);
       setLoading(false);
@@ -42,27 +41,47 @@ function LoginPage() {
           <h1 className="text-2xl font-bold text-gray-600">
             Login Your Account
           </h1>
+
+          {/* Email */}
           <Form.Item
             name="email"
             label="Email"
-            required
-            rules={[{ required: true, message: "Please Provide Your Email!" }]}
+            rules={[
+              { required: true, message: "Please enter your email address" },
+              {
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+                  if (!isValidEmail(value)) {
+                    return Promise.reject(
+                      new Error("Please enter a valid email address (must include @)")
+                    );
+                  }
+                  return Promise.resolve();
+                },
+              },
+            ]}
           >
-            <Input placeholder="Email"></Input>
+            <Input placeholder="example@email.com" size="large" />
           </Form.Item>
+
+          {/* Password */}
           <Form.Item
             name="password"
             label="Password"
-            required
-            rules={[{ required: true, message: "Please Provide A Password!" }]}
+            rules={[
+              { required: true, message: "Please enter your password" },
+            ]}
           >
-            <Input.Password placeholder="Password"></Input.Password>
+            <Input.Password placeholder="Password" size="large" />
           </Form.Item>
-          <Button type="primary" htmlType="submit" block loading={loading}>
+
+          <Button type="primary" htmlType="submit" block loading={loading} size="large">
             Login
           </Button>
+
           <p>
-            Don't Have An Account? <Link to="/register"> Register</Link>
+            Don't Have An Account?{" "}
+            <Link to="/register">Register</Link>
           </p>
         </Form>
       </div>

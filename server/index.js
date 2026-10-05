@@ -1,3 +1,6 @@
+const dns = require("dns");
+dns.setServers(["1.1.1.1", "8.8.8.8"]);
+
 const express = require("express");
 const { connectMongoDB } = require("./config/dbconfig");
 const cookieParser = require("cookie-parser");

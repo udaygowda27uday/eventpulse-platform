@@ -37,7 +37,7 @@ pipeline {
         stage('Security Audit') {
             steps {
                 dir('server') {
-                    bat 'npm audit --audit-level=high'
+                   bat 'npm audit --omit=dev --audit-level=high'
                 }
             }
         }

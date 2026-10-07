@@ -138,3 +138,6 @@ server/assets/media/*
 # Uncomment if you have large files in docs/
 # docs/videos/
 # docs/screenshots/*.mp4
+
+docker-compose.yml
+ssh-rule.json

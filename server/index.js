@@ -95,6 +95,6 @@ app.use((err, req, res, next) => {
 const port = process.env.PORT || 5000;
 
 app.listen(port, () => {
-  console.log(`🚀 Server is running on http://localhost:${port}`);
+  console.log(`🚀 EventPulse v2.0 - Server is running on http://localhost:${port}`);
   console.log(`📚 API Documentation: http://localhost:${port}/api-docs`);
 });

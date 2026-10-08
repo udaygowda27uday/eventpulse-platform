@@ -1,0 +1,45 @@
+name: EventPulse CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install backend dependencies
+        working-directory: ./server
+        run: npm ci
+
+      - name: Install frontend dependencies
+        working-directory: ./client
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: ./client
+        run: npm run build
+
+      - name: Validate backend syntax
+        working-directory: ./server
+        run: node --check index.js
+
+      - name: Build Docker image
+        run: docker build -t eventpulse-backend:ci ./server
+
+      - name: Security audit
+        working-directory: ./server
+        run: npm audit --omit=dev --audit-level=high

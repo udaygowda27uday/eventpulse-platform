@@ -42,7 +42,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.udayakumar27 }}
-          password: ${{ secrets.Udaya@892527 }}
+          password: ${{ secrets.Udaya892527 }}
 
       - name: Build and push Docker image
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

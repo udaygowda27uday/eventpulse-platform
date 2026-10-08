@@ -37,8 +37,22 @@ jobs:
         working-directory: ./server
         run: node --check index.js
 
-      - name: Build Docker image
-        run: docker build -t eventpulse-backend:ci ./server
+      - name: Log in to Docker Hub
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v6
+        with:
+          context: ./server
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/eventpulse-backend:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/eventpulse-backend:latest
 
       - name: Security audit
         working-directory: ./server

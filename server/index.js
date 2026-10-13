@@ -11,7 +11,7 @@ const setupSwagger = require("./config/swagger");
 const app = express();
 require("dotenv").config();
 
-connectMongoDB();
+// MongoDB connection is started in startServer() below.
 
 // CORS configuration to allow credentials
 app.use(
@@ -92,9 +92,23 @@ app.use((err, req, res, next) => {
   });
 });
 
+
 const port = process.env.PORT || 5000;
 
-app.listen(port, () => {
-  console.log(`🚀 EventPulse v2.0 - Server is running on http://localhost:${port}`);
-  console.log(`📚 API Documentation: http://localhost:${port}/api-docs`);
-});
+const startServer = async () => {
+  try {
+    await connectMongoDB();
+
+    app.listen(port, () => {
+      console.log(
+        `🚀 EventPulse v2.0 - Server is running on http://localhost:${port}`
+      );
+      console.log(`📚 API Documentation: http://localhost:${port}/api-docs`);
+    });
+  } catch (error) {
+    console.error("Server startup failed because MongoDB is unavailable.");
+    process.exit(1);
+  }
+};
+
+startServer();

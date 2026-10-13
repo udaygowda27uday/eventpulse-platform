@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eventpulse-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eventpulse-backend
+  template:
+    metadata:
+      labels:
+        app: eventpulse-backend
+    spec:
+      containers:
+        - name: eventpulse-backend
+          image: eventpulse-backend:1.3
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5000
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          envFrom:
+            - secretRef:
+                name: eventpulse-backend-env

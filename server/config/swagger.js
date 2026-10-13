@@ -18,15 +18,11 @@ const options = {
       },
     },
     servers: [
-      {
-        url: 'http://localhost:5000',
-        description: 'Development server',
-      },
-      {
-        url: 'https://your-production-url.com',
-        description: 'Production server',
-      },
-    ],
+  {
+    url: '/',
+    description: 'Current server',
+  },
+],
   },
   // Read Swagger docs from separate file
   apis: ['./config/swagger-docs.js'],

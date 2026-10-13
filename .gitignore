@@ -141,3 +141,6 @@ server/assets/media/*
 
 docker-compose.yml
 ssh-rule.json
+
+# Local backup files
+server/index.js.backup

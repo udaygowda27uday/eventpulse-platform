@@ -1,3 +1,4 @@
+
 pipeline {
     agent any
 
@@ -34,10 +35,22 @@ pipeline {
             }
         }
 
+        stage('Backend Validation') {
+            steps {
+                dir('server') {
+                    echo 'Checking backend JavaScript syntax...'
+                    bat 'node --check index.js'
+
+                    echo 'Checking installed backend dependencies...'
+                    bat 'npm ls --depth=0'
+                }
+            }
+        }
+
         stage('Security Audit') {
             steps {
                 dir('server') {
-                   bat 'npm audit --omit=dev --audit-level=high'
+                    bat 'npm audit --omit=dev --audit-level=high'
                 }
             }
         }
@@ -50,6 +63,10 @@ pipeline {
 
         failure {
             echo 'EventPulse CI pipeline failed. Check the failed stage and console output.'
+        }
+
+        always {
+            echo 'EventPulse CI pipeline execution finished.'
         }
     }
 }

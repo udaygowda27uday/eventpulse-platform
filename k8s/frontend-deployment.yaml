@@ -1,0 +1,28 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eventpulse-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eventpulse-frontend
+  template:
+    metadata:
+      labels:
+        app: eventpulse-frontend
+    spec:
+      containers:
+        - name: eventpulse-frontend
+          image: eventpulse-frontend:1.0
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "250m"
+              memory: "128Mi"

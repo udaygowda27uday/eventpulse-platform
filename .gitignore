@@ -144,3 +144,11 @@ ssh-rule.json
 
 # Local backup files
 server/index.js.backup
+
+# Terraform local files
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log

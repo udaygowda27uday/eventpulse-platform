@@ -44,7 +44,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Build and push backend Docker image
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v6
         with:
@@ -53,6 +53,16 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/eventpulse-backend:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/eventpulse-backend:latest
+
+      - name: Build and push frontend Docker image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v6
+        with:
+          context: ./client
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/eventpulse-frontend:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/eventpulse-frontend:latest
 
       - name: Security audit
         working-directory: ./server

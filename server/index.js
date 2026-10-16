@@ -46,7 +46,7 @@ app.use("/assets/media", express.static(path.join(__dirname, "assets/media")));
  *                   example: Event Booking System API is running
  *                 version:
  *                   type: string
- *                   example: 1.0.0
+ *                   example: 2.0.0
  *                 timestamp:
  *                   type: string
  *                   format: date-time
@@ -54,7 +54,7 @@ app.use("/assets/media", express.static(path.join(__dirname, "assets/media")));
 app.get("/", (req, res) => {
   res.json({
     message: "Event Booking System API is running",
-    version: "1.0.0",
+    version: "2.0.0",
     timestamp: new Date().toISOString(),
     documentation: "/api-docs",
   });
@@ -112,3 +112,4 @@ const startServer = async () => {
 };
 
 startServer();
+

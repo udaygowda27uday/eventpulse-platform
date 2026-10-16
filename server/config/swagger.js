@@ -6,7 +6,7 @@ const options = {
     openapi: '3.0.0',
     info: {
       title: 'Event Booking System API',
-      version: '1.0.0',
+      version: '2.0.0',
       description: 'A comprehensive event management and booking platform built with MERN stack',
       contact: {
         name: 'Developer',

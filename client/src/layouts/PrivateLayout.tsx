@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "./sidebar/Sidebar";
@@ -12,27 +13,41 @@ function PrivateLayout({ children }: { children: React.ReactNode }) {
   const { currentUser, setCurrentUser } = useUser();
 
   useEffect(() => {
+    let active = true;
+
     const checkAuth = async () => {
       try {
         const response = await getCurrentUser();
-        setCurrentUser(response.data);
-        setLoading(false);
+
+        if (active) {
+          setCurrentUser(response.data);
+        }
       } catch (error: any) {
-        message.error(
-          error.response?.data?.message || "Please login to continue",
-        );
-        navigate("/login", { replace: true });
+        if (active) {
+          setCurrentUser(null);
+          message.error(
+            error.response?.data?.message ||
+              "Please login to continue",
+          );
+          navigate("/login", { replace: true });
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
       }
     };
 
-    // Only fetch user if not already in store
-    if (!currentUser) {
-      checkAuth();
-    } else {
+    if (currentUser) {
       setLoading(false);
+    } else {
+      checkAuth();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    return () => {
+      active = false;
+    };
+  }, [currentUser, setCurrentUser, navigate]);
 
   if (loading) {
     return (

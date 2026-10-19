@@ -1,4 +1,5 @@
-name: EventPulse CI
+
+name: EventPulse CI-CD
 
 on:
   push:
@@ -19,7 +20,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Install backend dependencies
         working-directory: ./server
@@ -57,7 +58,7 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/eventpulse-backend:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/eventpulse-backend:latest
-     
+
       - name: Build and push frontend Docker image
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v6
@@ -70,7 +71,7 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/eventpulse-frontend:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/eventpulse-frontend:latest
 
-              deploy:
+  deploy:
     name: Deploy to local Minikube
     runs-on: self-hosted
     needs: build
@@ -81,7 +82,9 @@ jobs:
         shell: powershell
         run: |
           kubectl config current-context
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           kubectl get deployments
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Deploy backend
         shell: powershell
@@ -108,7 +111,6 @@ jobs:
         run: |
           kubectl rollout status deployment/eventpulse-backend --timeout=180s
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
           kubectl rollout status deployment/eventpulse-frontend --timeout=180s
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
@@ -116,5 +118,8 @@ jobs:
         shell: powershell
         run: |
           kubectl get deployments
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           kubectl get pods
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           kubectl get services
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

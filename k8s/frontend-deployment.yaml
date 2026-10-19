@@ -15,8 +15,8 @@ spec:
     spec:
       containers:
         - name: eventpulse-frontend
-          image: eventpulse-frontend:1.0
-          imagePullPolicy: Never
+          image: udayakumar27/eventpulse-frontend:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
           resources:

@@ -57,13 +57,64 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/eventpulse-backend:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/eventpulse-backend:latest
-
+     
       - name: Build and push frontend Docker image
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v6
         with:
           context: ./client
           push: true
+          build-args: |
+            VITE_API_URL=/api
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/eventpulse-frontend:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/eventpulse-frontend:latest
+
+              deploy:
+    name: Deploy to local Minikube
+    runs-on: self-hosted
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Verify Kubernetes connection
+        shell: powershell
+        run: |
+          kubectl config current-context
+          kubectl get deployments
+
+      - name: Deploy backend
+        shell: powershell
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          $image = "$env:DOCKERHUB_USERNAME/eventpulse-backend:$env:IMAGE_TAG"
+          kubectl set image deployment/eventpulse-backend eventpulse-backend=$image
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Deploy frontend
+        shell: powershell
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          $image = "$env:DOCKERHUB_USERNAME/eventpulse-frontend:$env:IMAGE_TAG"
+          kubectl set image deployment/eventpulse-frontend eventpulse-frontend=$image
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Verify deployment rollout
+        shell: powershell
+        run: |
+          kubectl rollout status deployment/eventpulse-backend --timeout=180s
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          kubectl rollout status deployment/eventpulse-frontend --timeout=180s
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Check final pod status
+        shell: powershell
+        run: |
+          kubectl get deployments
+          kubectl get pods
+          kubectl get services

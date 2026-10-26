@@ -98,6 +98,14 @@ jobs:
           kubectl set image deployment/eventpulse-backend eventpulse-backend=$image
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+          $patchFile = Join-Path $env:RUNNER_TEMP "backend-startup-probe.json"
+          $patch = '{"spec":{"template":{"spec":{"containers":[{"name":"eventpulse-backend","startupProbe":{"httpGet":{"path":"/","port":5000},"periodSeconds":10,"timeoutSeconds":3,"failureThreshold":30}}]}}}}'
+
+          Set-Content -Path $patchFile -Value $patch -Encoding ascii
+
+          kubectl patch deployment eventpulse-backend --type=strategic --patch-file $patchFile
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Deploy frontend
         shell: powershell
         env:
@@ -120,10 +128,10 @@ jobs:
       - name: Verify deployment rollout
         shell: powershell
         run: |
-          kubectl rollout status deployment/eventpulse-backend --timeout=180s
+          kubectl rollout status deployment/eventpulse-backend --timeout=360s
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-          kubectl rollout status deployment/eventpulse-frontend --timeout=180s
+          kubectl rollout status deployment/eventpulse-frontend --timeout=360s
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Check final pod status

@@ -83,6 +83,7 @@ jobs:
         run: |
           kubectl config current-context
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
           kubectl get deployments
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
@@ -93,6 +94,7 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           $image = "$env:DOCKERHUB_USERNAME/eventpulse-backend:$env:IMAGE_TAG"
+
           kubectl set image deployment/eventpulse-backend eventpulse-backend=$image
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
@@ -103,7 +105,16 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           $image = "$env:DOCKERHUB_USERNAME/eventpulse-frontend:$env:IMAGE_TAG"
+
           kubectl set image deployment/eventpulse-frontend eventpulse-frontend=$image
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          $patchFile = Join-Path $env:RUNNER_TEMP "frontend-patch.json"
+          $patch = '{"spec":{"template":{"spec":{"containers":[{"name":"eventpulse-frontend","imagePullPolicy":"Always"}]}}}}'
+
+          Set-Content -Path $patchFile -Value $patch -Encoding ascii
+
+          kubectl patch deployment eventpulse-frontend --type=strategic --patch-file $patchFile
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Verify deployment rollout
@@ -111,6 +122,7 @@ jobs:
         run: |
           kubectl rollout status deployment/eventpulse-backend --timeout=180s
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
           kubectl rollout status deployment/eventpulse-frontend --timeout=180s
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
@@ -119,7 +131,9 @@ jobs:
         run: |
           kubectl get deployments
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
           kubectl get pods
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
           kubectl get services
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

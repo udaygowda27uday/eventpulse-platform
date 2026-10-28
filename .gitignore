@@ -163,3 +163,14 @@ override.tf.json
 *_override.tf
 *_override.tf.json
 /actions-runner/
+
+# Local backups and temporary audit reports
+*.backup
+*.before-grpc-fix
+*.before-uuid-fix
+npm-audit-report.json
+audit-current.json
+frontend-patch.yaml
+
+# Local Grafana SMTP configuration (may contain credentials)
+grafana-smtp-values.yaml

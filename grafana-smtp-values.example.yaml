@@ -1,0 +1,20 @@
+initChownData:
+  enabled: false
+
+persistence:
+  enabled: true
+  size: 5Gi
+
+smtp:
+  existingSecret: grafana-smtp
+  userKey: username
+  passwordKey: password
+
+grafana.ini:
+  smtp:
+    enabled: true
+    host: smtp.gmail.com:587
+    from_address: your-email@example.com
+    from_name: EventPulse Grafana
+    skip_verify: false
+    startTLS_policy: Mandatory

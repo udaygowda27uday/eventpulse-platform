@@ -1,0 +1,35 @@
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: eventpulse-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:?Set MONGO_ROOT_USERNAME in root .env}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?Set MONGO_ROOT_PASSWORD in root .env}
+    volumes:
+      - eventpulse_mongodb_data:/data/db
+    networks:
+      - eventpulse-network
+
+  backend:
+    image: eventpulse-backend:1.0
+    container_name: eventpulse-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./server/.env
+    depends_on:
+      - mongodb
+    networks:
+      - eventpulse-network
+
+volumes:
+  eventpulse_mongodb_data:
+    external: true
+
+networks:
+  eventpulse-network:
+    external: true
+    name: eventpulse-platform_default
